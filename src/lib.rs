@@ -1,3 +1,4 @@
+#[macro_export]
 macro_rules! delegate_method {
     ( $fld:ident as $fldty:ty : ) => {
 
