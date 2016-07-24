@@ -1,6 +1,6 @@
 [package]
 name = "delegatemethod"
-version = "0.1.1"
+version = "0.1.2-pre"
 license = "MIT"
 authors = ["CrLF0710 <crlf0710@gmail.com>"]
 description = "Delegate method calls to a field."
