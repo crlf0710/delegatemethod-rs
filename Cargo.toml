@@ -1,6 +1,10 @@
 [package]
 name = "delegatemethod"
 version = "0.1.0"
+license = "MIT"
 authors = ["CrLF0710 <crlf0710@gmail.com>"]
+description = "Delegate method calls to a field."
+repository = "https://github.com/crlf0710/delegatemethod-rs"
+
 
 [dependencies]
