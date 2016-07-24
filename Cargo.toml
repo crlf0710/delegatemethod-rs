@@ -1,0 +1,6 @@
+[package]
+name = "delegatemethod"
+version = "0.1.0"
+authors = ["CrLF0710 <crlf0710@gmail.com>"]
+
+[dependencies]
