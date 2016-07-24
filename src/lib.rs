@@ -1,124 +1,121 @@
 #[macro_export]
 macro_rules! delegate_method {
-    ( $fld:ident as $fldty:ty : ) => {
+    {impl $($tt:tt)*} =>
+    {delegate_method!{@impl_collect () $($tt)*}};
 
-    };
+    {@impl_collect ($($headtt:tt)*) {$($tailtt:tt)*}} =>
+    {delegate_method!{@impl_expansion ($($headtt)*) ($($tailtt)*) ()}};
 
-    ( $fld:ident : $($rest:tt)*) => {
-        delegate_method!($fld as () : $($rest)*)
-    };
+    {@impl_collect ($($headtt:tt)*) $tt:tt $($tailtt:tt)*} =>
+    {delegate_method!{@impl_collect ($($headtt)* $tt) $($tailtt)*}};
 
-    ( $fld_last:ident as $fldty_last:ty : $fld:ident : $($rest:tt)*) => {
-        delegate_method!($fld : $($rest)*);
-    };
+    {@impl_expansion_impl ($($headtt:tt)*) ($($itemtt:tt)*) ($($resttt:tt)*) ($($tailtt:tt)*)} =>
+    {delegate_method!{@impl_expansion ($($headtt)*) ($($resttt)*) ($($tailtt)* $($itemtt)*)}};
 
-    ( $fld_last:ident as $fldty_last:ty : $fld:ident as $fldty:ty: $($rest:tt)*) => {
-        delegate_method!($fld as $fldty: $($rest)*);
-    };
+    (@impl_finalization ($($headtt:tt)*) ($($tailtt:tt)*)) =>
+    {delegate_method!(@as_item #[allow(dead_code)]impl $($headtt)* { $($tailtt)* })};
 
-    ( $fld:ident as $fldty:ty : fn $fcn:ident (self) $(-> $r:ty)* ; $($rest:tt)* ) => {
-        fn $fcn ( self ) $(-> $r)* {
-            (self.$fld).$fcn()
-        }
-        delegate_method!($fld as $fldty: $($rest)*);
-    };
+    (@as_item $i:item) => { $i };
 
-    ( $fld:ident as $fldty:ty : pub fn $fcn:ident (self) $(-> $r:ty)*; $($rest:tt)* ) => {
-        pub fn $fcn ( self ) $(-> $r)* {
-            (self.$fld).$fcn()
-        }
-        delegate_method!($fld as $fldty: $($rest)*);
-    };
+    {@impl_expansion ($($headtt:tt)*) () ($($tailtt:tt)*)} =>
+    {delegate_method!(@impl_finalization ($($headtt)*) ($($tailtt)*))};
 
-    ( $fld:ident as $fldty:ty : fn $fcn:ident (&self) $(-> $r:ty)*; $($rest:tt)* ) => {
-        fn $fcn ( &self ) $(-> $r)* {
-            (self.$fld).$fcn()
-        }
-        delegate_method!($fld as $fldty: $($rest)*);
-    };
+    {@impl_expansion ($($headtt:tt)*)
+     ($fld:ident $(as $fldty:ty)* : ) ($($tailtt:tt)*)} =>
+    {delegate_method!(@impl_expansion ($($headtt)*) () ($($tailtt)*))};
 
-    ( $fld:ident as $fldty:ty : pub fn $fcn:ident (&self) $(-> $r:ty)*; $($rest:tt)* ) => {
-        pub fn $fcn ( &self ) $(-> $r)* {
-            (self.$fld).$fcn()
-        }
-        delegate_method!($fld as $fldty: $($rest)*);
-    };
+    {@impl_expansion ($($headtt:tt)*)
+     ($fld_last:ident $(as $fldty_last:ty)* :
+      $fld:ident $(as $fldty:ty)* : $($resttt:tt)*) ($($tailtt:tt)*)} =>
+    {delegate_method!(@impl_expansion ($($headtt)*)
+                      ($fld $(as $fldty)* : $($resttt)*) ($($tailtt)*))};
 
-    ( $fld:ident as $fldty:ty : fn $fcn:ident (&mut self) $(-> $r:ty)*; $($rest:tt)* ) => {
-        fn $fcn ( &mut self ) $(-> $r)* {
-            (self.$fld).$fcn()
-        }
+    {@impl_expansion ($($headtt:tt)*)
+     ($fld:ident : $($resttt:tt)*) ($($tailtt:tt)*)} =>
+    {delegate_method!(@impl_expansion ($($headtt)*) ($fld as () : $($resttt)*) ($($tailtt)*))};
 
-        delegate_method!($fld as $fldty: $($rest)*);
-    };
+    {@impl_expansion ($($headtt:tt)*)
+     ($fld:ident as $fldty:ty :
+      pub fn $fcn:ident $(< $($lt:tt),* >)* ($($args:tt)*) $(-> $r:ty)* ; $($resttt:tt)* )
+     ($($tailtt:tt)*)} =>
+    {delegate_method!(@impl_expansion_item ($($headtt)*)
+                      ($fld) ($fldty) ($fcn) (pub fn) ($($($lt),*),*) ($($args)*) ($(-> $r)*)
+                      ($fld as $fldty : $($resttt)*) ($($tailtt)*))};
 
-    ( $fld:ident as $fldty:ty : pub fn $fcn:ident (&mut self) $(-> $r:ty)*; $($rest:tt)* ) => {
-        pub fn $fcn ( &mut self ) $(-> $r)* {
-            (self.$fld).$fcn()
-        }
+    {@impl_expansion ($($headtt:tt)*)
+     ($fld:ident as $fldty:ty :
+      fn $fcn:ident $(< $($lt:tt),* >)* ($($args:tt)*) $(-> $r:ty)* ; $($resttt:tt)* )
+     ($($tailtt:tt)*)} =>
+    {delegate_method!(@impl_expansion_item ($($headtt)*)
+                      ($fld) ($fldty) ($fcn) (fn) ($($($lt),*),*) ($($args)*) ($(-> $r)*)
+                      ($fld as $fldty : $($resttt)*) ($($tailtt)*))};
 
-        delegate_method!($fld as $fldty: $($rest)*);
-    };
+    (@impl_expansion_item ($($headtt:tt)*)
+     ($fld:ident) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) ($($gp:tt)+) ($($args:tt)*) ($($r:tt)*)
+     ($($resttt:tt)*) ($($tailtt:tt)*)) =>
+    {delegate_method!(@impl_expansion_gp ($($headtt)*)
+                      ($fld) ($fldty) ($fcn) ($($kwtt)*) (<$($gp)*>) ($($args)*) ($($r)*)
+                      ($($resttt)*) ($($tailtt)*))};
 
-    ( $fld:ident as $fldty:ty : fn $fcn:ident (self, $( $a:ident : $at:ty ),* ) $(-> $r:ty)*; $($rest:tt)* ) => {
-        fn $fcn ( self, $( $a : $at ),* ) $(-> $r)* {
-            (self.$fld).$fcn( $( $a ),* )
-        }
-        delegate_method!($fld as $fldty: $($rest)*);
-    };
+    (@impl_expansion_item ($($headtt:tt)*)
+     ($fld:ident) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) () ($($args:tt)*) ($($r:tt)*)
+     ($($resttt:tt)*) ($($tailtt:tt)*)) =>
+    {delegate_method!(@impl_expansion_gp ($($headtt)*)
+                      ($fld) ($fldty) ($fcn) ($($kwtt)*) () ($($args)*) ($($r)*)
+                      ($($resttt)*) ($($tailtt)*))};
 
-    ( $fld:ident as $fldty:ty : pub fn $fcn:ident (self, $( $a:ident : $at:ty ),* ) $(-> $r:ty)*; $($rest:tt)* ) => {
-        pub fn $fcn ( self, $( $a : $at ),* ) $(-> $r)* {
-            (self.$fld).$fcn( $( $a ),* )
-        }
-        delegate_method!($fld as $fldty: $($rest)*);
-    };
+    (@impl_expansion_gp ($($headtt:tt)*)
+     ($fld:ident) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) ($($gp:tt)*) (self) ($($r:tt)*)
+     ($($resttt:tt)*) ($($tailtt:tt)*)) =>
+    {delegate_method!(@impl_expansion_impl ($($headtt)*)
+                      ($($kwtt)* $fcn $($gp)* (self) $($r)* { (self.$fld).$fcn() })
+                      ($($resttt)*) ($($tailtt)*))};
 
-    ( $fld:ident as $fldty:ty : fn $fcn:ident (&self, $( $a:ident : $at:ty ),* ) $(-> $r:ty)*; $($rest:tt)* ) => {
-        fn $fcn ( &self, $( $a : $at ),* ) $(-> $r)* {
-            (self.$fld).$fcn( $( $a ),* )
-        }
-        delegate_method!($fld as $fldty: $($rest)*);
-    };
+    (@impl_expansion_gp ($($headtt:tt)*)
+     ($fld:ident) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) ($($gp:tt)*) (&self) ($($r:tt)*)
+     ($($resttt:tt)*) ($($tailtt:tt)*)) =>
+    {delegate_method!(@impl_expansion_impl ($($headtt)*)
+                      ($($kwtt)* $fcn $($gp)* (&self) $($r)* { (self.$fld).$fcn() })
+      ($($resttt)*) ($($tailtt)*))};
 
-    ( $fld:ident as $fldty:ty : pub fn $fcn:ident (&self, $( $a:ident : $at:ty ),* ) $(-> $r:ty)*; $($rest:tt)* ) => {
-        pub fn $fcn ( &self, $( $a : $at ),* ) $(-> $r)* {
-            (self.$fld).$fcn( $( $a ),* )
-        }
-        delegate_method!($fld as $fldty: $($rest)*);
-    };
+    (@impl_expansion_gp ($($headtt:tt)*)
+    ($fld:ident) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) ($($gp:tt)*) (&mut self) ($($r:tt)*)
+    ($($resttt:tt)*) ($($tailtt:tt)*)) =>
+    {delegate_method!(@impl_expansion_impl ($($headtt)*)
+      ($($kwtt)* $fcn $($gp)* (&mut self) $($r)* { (self.$fld).$fcn() })
+      ($($resttt)*) ($($tailtt)*))};
 
-    ( $fld:ident as $fldty:ty : fn $fcn:ident (&mut self, $( $a:ident : $at:ty ),* ) $(-> $r:ty)*; $($rest:tt)* ) => {
-        fn $fcn ( &mut self, $( $a : $at ),* ) $(-> $r)* {
-            (self.$fld).$fcn( $( $a ),* )
-        }
+    (@impl_expansion_gp ($($headtt:tt)*)
+   ($fld:ident) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) ($($gp:tt)*)
+   (self, $( $a:ident : $at:ty ),*) ($($r:tt)*)
+    ($($resttt:tt)*) ($($tailtt:tt)*)) =>
+    {delegate_method!(@impl_expansion_impl ($($headtt)*)
+      ($($kwtt)* $fcn $($gp)* (self,$($a : $at)*) $($r)* { (self.$fld).$fcn($($a),*) })
+      ($($resttt)*) ($($tailtt)*))};
 
-        delegate_method!($fld as $fldty: $($rest)*);
-    };
+    (@impl_expansion_gp ($($headtt:tt)*)
+   ($fld:ident) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) ($($gp:tt)*)
+   (&self, $( $a:ident : $at:ty ),*) ($($r:tt)*)
+    ($($resttt:tt)*) ($($tailtt:tt)*)) =>
+    {delegate_method!(@impl_expansion_impl ($($headtt)*)
+      ($($kwtt)* $fcn $($gp)* (&self,$($a : $at)*) $($r)* { (self.$fld).$fcn($($a),*) })
+      ($($resttt)*) ($($tailtt)*))};
 
-    ( $fld:ident as $fldty:ty : pub fn $fcn:ident (&mut self, $( $a:ident : $at:ty ),* ) $(-> $r:ty)*; $($rest:tt)* ) => {
-        pub fn $fcn ( &mut self, $( $a : $at ),* ) $(-> $r)* {
-            (self.$fld).$fcn( $( $a ),* )
-        }
+    (@impl_expansion_gp ($($headtt:tt)*)
+   ($fld:ident) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) ($($gp:tt)*)
+   (&mut self, $( $a:ident : $at:ty ),*) ($($r:tt)*)
+    ($($resttt:tt)*) ($($tailtt:tt)*)) =>
+    {delegate_method!(@impl_expansion_impl ($($headtt)*)
+      ($($kwtt)* $fcn $($gp)* (&mut self,$($a : $at)*) $($r)* { (self.$fld).$fcn($($a),*) })
+      ($($resttt)*) ($($tailtt)*))};
 
-        delegate_method!($fld as $fldty: $($rest)*);
-    };
-
-
-    ( $fld:ident as $fldty:ty : fn $fcn:ident ($( $a:ident : $at:ty ),* ) $(-> $r:ty)*; $($rest:tt)* ) => {
-        fn $fcn ( $( $a : $at ),* ) $(-> $r)* {
-            <$fldty>::$fcn( $( $a ),* )
-        }
-        delegate_method!($fld as $fldty: $($rest)*);
-    };
-
-    ( $fld:ident as $fldty:ty : pub fn $fcn:ident ($( $a:ident : $at:ty ),* ) $(-> $r:ty)*; $($rest:tt)* ) => {
-        pub fn $fcn ( $( $a : $at ),* ) $(-> $r)* {
-            <$fldty>::$fcn( $( $a ),* )
-        }
-        delegate_method!($fld as $fldty: $($rest)*);
-    };
-
+    (@impl_expansion_gp ($($headtt:tt)*)
+   ($fld:ident) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) ($($gp:tt)*)
+   ($( $a:ident : $at:ty ),*) ($($r:tt)*)
+    ($($resttt:tt)*) ($($tailtt:tt)*)) =>
+    {delegate_method!(@ impl_expansion_impl ($($headtt)*)
+      ($($kwtt)* $fcn $($gp)* ($($a : $at)*) $($r)* { <$fldty>::$fcn($($a),*) })
+      ($($resttt)*) ($($tailtt)*))};
 }
 
 
@@ -139,6 +136,10 @@ mod tests {
         }
 
         pub fn noop(&self) {}
+
+        pub fn str_to_owned<'a>(str: &'a str) -> String {
+            str.to_owned()
+        }
 
         pub fn get(&self) -> usize {
             self.data
@@ -169,29 +170,34 @@ mod tests {
 
     #[test]
     fn test_delegate() {
+
         #[derive(Copy, Clone)]
         struct Outer {
             inner: Inner,
         }
 
-        impl Outer {
-            delegate_method! {
+        delegate_method! {
+			      impl Outer {
                 inner as Inner:
-                pub fn new_inner() -> Inner;
-                pub fn new_inner_add(val: usize) -> Inner;
-                pub fn noop(&self);
-                pub fn get(&self) -> usize;
-                pub fn get_add(&self, val: usize) -> usize;
-                pub fn reset(&mut self) -> usize;
-                pub fn set(&mut self, val: usize) -> usize;
+                fn new_inner() -> Inner;
+                fn new_inner_add(val: usize) -> Inner;
+                fn noop(&self);
+				        fn str_to_owned<'a>(str: &'a str) -> String;
+                fn get(&self) -> usize;
+                fn get_add(&self, val: usize) -> usize;
+                fn reset(&mut self) -> usize;
+                fn set(&mut self, val: usize) -> usize;
                 inner as Inner:
-                pub fn to_data(self) -> usize;
-                pub fn to_data_add(self, val: usize) -> usize;
+                fn to_data(self) -> usize;
+                fn to_data_add(self, val: usize) -> usize;
             }
-        }
+        };
+
 
         assert_eq!(Outer::new_inner().get(), 42);
         assert_eq!(Outer::new_inner_add(58).get(), 100);
+
+        assert_eq!(Outer::str_to_owned("Hello"), "Hello".to_owned());
 
         let mut x = Outer { inner: Inner::new_inner() };
 
