@@ -21,21 +21,21 @@ macro_rules! delegate_method {
     {delegate_method!(@impl_finalization ($($headtt)*) ($($tailtt)*));};
 
     {@impl_expansion ($($headtt:tt)*)
-     ($fld:ident $(as $fldty:ty)* : ) ($($tailtt:tt)*)} =>
+     ($fld:tt $(as $fldty:ty)* : ) ($($tailtt:tt)*)} =>
     {delegate_method!(@impl_expansion ($($headtt)*) () ($($tailtt)*));};
 
     {@impl_expansion ($($headtt:tt)*)
-     ($fld_last:ident $(as $fldty_last:ty)* :
-      $fld:ident $(as $fldty:ty)* : $($resttt:tt)*) ($($tailtt:tt)*)} =>
+     ($fld_last:tt $(as $fldty_last:ty)* :
+      $fld:tt $(as $fldty:ty)* : $($resttt:tt)*) ($($tailtt:tt)*)} =>
     {delegate_method!(@impl_expansion ($($headtt)*)
                       ($fld $(as $fldty)* : $($resttt)*) ($($tailtt)*));};
 
     {@impl_expansion ($($headtt:tt)*)
-     ($fld:ident : $($resttt:tt)*) ($($tailtt:tt)*)} =>
+     ($fld:tt : $($resttt:tt)*) ($($tailtt:tt)*)} =>
     {delegate_method!(@impl_expansion ($($headtt)*) ($fld as () : $($resttt)*) ($($tailtt)*))};
 
     {@impl_expansion ($($headtt:tt)*)
-     ($fld:ident as $fldty:ty :
+     ($fld:tt as $fldty:ty :
       pub fn $fcn:ident $(< $($lt:tt),* >)* ($($args:tt)*) $(-> $r:ty)* ; $($resttt:tt)* )
      ($($tailtt:tt)*)} =>
     {delegate_method!(@impl_expansion_item ($($headtt)*)
@@ -43,7 +43,7 @@ macro_rules! delegate_method {
                       ($fld as $fldty : $($resttt)*) ($($tailtt)*));};
 
     {@impl_expansion ($($headtt:tt)*)
-     ($fld:ident as $fldty:ty :
+     ($fld:tt as $fldty:ty :
       fn $fcn:ident $(< $($lt:tt),* >)* ($($args:tt)*) $(-> $r:ty)* ; $($resttt:tt)* )
      ($($tailtt:tt)*)} =>
     {delegate_method!(@impl_expansion_item ($($headtt)*)
@@ -51,42 +51,42 @@ macro_rules! delegate_method {
                       ($fld as $fldty : $($resttt)*) ($($tailtt)*));};
 
     (@impl_expansion_item ($($headtt:tt)*)
-     ($fld:ident) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) ($($gp:tt)+) ($($args:tt)*) ($($r:tt)*)
+     ($fld:tt) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) ($($gp:tt)+) ($($args:tt)*) ($($r:tt)*)
      ($($resttt:tt)*) ($($tailtt:tt)*)) =>
     {delegate_method!(@impl_expansion_gp ($($headtt)*)
                       ($fld) ($fldty) ($fcn) ($($kwtt)*) (<$($gp)*>) ($($args)*) ($($r)*)
                       ($($resttt)*) ($($tailtt)*));};
 
     (@impl_expansion_item ($($headtt:tt)*)
-     ($fld:ident) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) () ($($args:tt)*) ($($r:tt)*)
+     ($fld:tt) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) () ($($args:tt)*) ($($r:tt)*)
      ($($resttt:tt)*) ($($tailtt:tt)*)) =>
     {delegate_method!(@impl_expansion_gp ($($headtt)*)
                       ($fld) ($fldty) ($fcn) ($($kwtt)*) () ($($args)*) ($($r)*)
                       ($($resttt)*) ($($tailtt)*));};
 
     (@impl_expansion_gp ($($headtt:tt)*)
-     ($fld:ident) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) ($($gp:tt)*) (self) ($($r:tt)*)
+     ($fld:tt) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) ($($gp:tt)*) (self) ($($r:tt)*)
      ($($resttt:tt)*) ($($tailtt:tt)*)) =>
     {delegate_method!(@impl_expansion_impl ($($headtt)*)
                       ($($kwtt)* $fcn $($gp)* (self) $($r)* { (self.$fld).$fcn() })
                       ($($resttt)*) ($($tailtt)*));};
 
     (@impl_expansion_gp ($($headtt:tt)*)
-     ($fld:ident) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) ($($gp:tt)*) (&self) ($($r:tt)*)
+     ($fld:tt) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) ($($gp:tt)*) (&self) ($($r:tt)*)
      ($($resttt:tt)*) ($($tailtt:tt)*)) =>
     {delegate_method!(@impl_expansion_impl ($($headtt)*)
                       ($($kwtt)* $fcn $($gp)* (&self) $($r)* { (self.$fld).$fcn() })
       ($($resttt)*) ($($tailtt)*));};
 
     (@impl_expansion_gp ($($headtt:tt)*)
-    ($fld:ident) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) ($($gp:tt)*) (&mut self) ($($r:tt)*)
+    ($fld:tt) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) ($($gp:tt)*) (&mut self) ($($r:tt)*)
     ($($resttt:tt)*) ($($tailtt:tt)*)) =>
     {delegate_method!(@impl_expansion_impl ($($headtt)*)
       ($($kwtt)* $fcn $($gp)* (&mut self) $($r)* { (self.$fld).$fcn() })
       ($($resttt)*) ($($tailtt)*));};
 
     (@impl_expansion_gp ($($headtt:tt)*)
-   ($fld:ident) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) ($($gp:tt)*)
+   ($fld:tt) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) ($($gp:tt)*)
    (self, $( $a:ident : $at:ty ),*) ($($r:tt)*)
     ($($resttt:tt)*) ($($tailtt:tt)*)) =>
     {delegate_method!(@impl_expansion_impl ($($headtt)*)
@@ -94,7 +94,7 @@ macro_rules! delegate_method {
       ($($resttt)*) ($($tailtt)*));};
 
     (@impl_expansion_gp ($($headtt:tt)*)
-   ($fld:ident) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) ($($gp:tt)*)
+   ($fld:tt) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) ($($gp:tt)*)
    (&self, $( $a:ident : $at:ty ),*) ($($r:tt)*)
     ($($resttt:tt)*) ($($tailtt:tt)*)) =>
     {delegate_method!(@impl_expansion_impl ($($headtt)*)
@@ -102,7 +102,7 @@ macro_rules! delegate_method {
       ($($resttt)*) ($($tailtt)*));};
 
     (@impl_expansion_gp ($($headtt:tt)*)
-   ($fld:ident) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) ($($gp:tt)*)
+   ($fld:tt) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) ($($gp:tt)*)
    (&mut self, $( $a:ident : $at:ty ),*) ($($r:tt)*)
     ($($resttt:tt)*) ($($tailtt:tt)*)) =>
     {delegate_method!(@impl_expansion_impl ($($headtt)*)
@@ -110,7 +110,7 @@ macro_rules! delegate_method {
       ($($resttt)*) ($($tailtt)*));};
 
     (@impl_expansion_gp ($($headtt:tt)*)
-   ($fld:ident) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) ($($gp:tt)*)
+   ($fld:tt) ($fldty:ty) ($fcn:ident) ($($kwtt:tt)*) ($($gp:tt)*)
    ($( $a:ident : $at:ty ),*) ($($r:tt)*)
     ($($resttt:tt)*) ($($tailtt:tt)*)) =>
     {delegate_method!(@ impl_expansion_impl ($($headtt)*)
