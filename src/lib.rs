@@ -21,8 +21,8 @@ macro_rules! delegate_method {
     {delegate_method!(@impl_finalization ($($headtt)*) ($($tailtt)*));};
 
     {@impl_expansion ($($headtt:tt)*)
-     (type $ascty:ty = $dstty:ty; $($resttt:tt)*) ($($tailtt:tt)*)} =>
-    {delegate_method!(@impl_expansion ($($headtt)*) ($($resttt)*) ($($tailtt)* type $ascty = $dstty; ))};
+     (type $ascty:ident = $dstty:ty; $($resttt:tt)*) ($($tailtt:tt)*)} =>
+    {delegate_method!(@impl_expansion ($($headtt)*) ($($resttt)*) ($($tailtt)* type $ascty = $dstty; ));};
 
     {@impl_expansion ($($headtt:tt)*)
      ($fld:tt $(as $fldty:ty)* : ) ($($tailtt:tt)*)} =>
