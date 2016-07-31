@@ -10,7 +10,7 @@ macro_rules! delegate_method {
     {delegate_method!{@impl_collect ($($headtt)* $tt) $($tailtt)*}};
 
     {@impl_expansion_impl ($($headtt:tt)*) ($($itemtt:tt)*) ($($resttt:tt)*) ($($tailtt:tt)*)} =>
-    {delegate_method!{@impl_expansion ($($headtt)*) ($($resttt)*) ($($tailtt)* $($itemtt)*)}};
+    {delegate_method!{@impl_expansion ($($headtt)*) ($($resttt)*) ($($tailtt)* #[inline] $($itemtt)*)}};
 
     (@impl_finalization ($($headtt:tt)*) ($($tailtt:tt)*)) =>
     {delegate_method!(@as_item #[allow(dead_code)]impl $($headtt)* { $($tailtt)* });};
@@ -19,6 +19,10 @@ macro_rules! delegate_method {
 
     {@impl_expansion ($($headtt:tt)*) () ($($tailtt:tt)*)} =>
     {delegate_method!(@impl_finalization ($($headtt)*) ($($tailtt)*));};
+
+    {@impl_expansion ($($headtt:tt)*)
+     (type $ascty:ty = $dstty:ty; $($resttt:tt)*) ($($tailtt:tt)*)} =>
+    {delegate_method!(@impl_expansion ($($headtt)*) ($($resttt)*) ($($tailtt)* type $ascty = $dstty; ))};
 
     {@impl_expansion ($($headtt:tt)*)
      ($fld:tt $(as $fldty:ty)* : ) ($($tailtt:tt)*)} =>
