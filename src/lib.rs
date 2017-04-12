@@ -40,6 +40,22 @@ macro_rules! delegate_method {
 
     {@impl_expansion ($($headtt:tt)*)
      ($fld:tt as $fldty:ty :
+      pub fn $fcn:ident $(< $($lt:tt),* >)* ($($args:tt)*) $(-> $r:ty)* $(where $($aty:ident : ?Sized $(+ $ayb_rest:tt $(:: $ayb_rest_ext:tt)*)*),*)*; $($resttt:tt)* )
+     ($($tailtt:tt)*)} =>
+    {delegate_method!(@impl_expansion_item ($($headtt)*)
+                      ($fld) ($fldty) ($fcn) (pub fn) ($($($lt),*),*) ($($args)*) ($(-> $r)*) ($($($aty : ?Sized $(+ $ayb_rest $(:: $ayb_rest_ext)*)*),*)*)
+                      ($fld as $fldty : $($resttt)*) ($($tailtt)*));};
+
+    {@impl_expansion ($($headtt:tt)*)
+     ($fld:tt as $fldty:ty :
+      fn $fcn:ident $(< $($lt:tt),* >)* ($($args:tt)*) $(-> $r:ty)* $(where $($aty:ident : ?Sized $(+ $ayb_rest:tt $(:: $ayb_rest_ext:tt)*)*),*)*; $($resttt:tt)* )
+     ($($tailtt:tt)*)} =>
+    {delegate_method!(@impl_expansion_item ($($headtt)*)
+                      ($fld) ($fldty) ($fcn) (fn) ($($($lt),*),*) ($($args)*) ($(-> $r)*) ($($($aty : ?Sized $(+ $ayb_rest $(:: $ayb_rest_ext)*)*),*)*)
+                      ($fld as $fldty : $($resttt)*) ($($tailtt)*));};
+
+    {@impl_expansion ($($headtt:tt)*)
+     ($fld:tt as $fldty:ty :
       pub fn $fcn:ident $(< $($lt:tt),* >)* ($($args:tt)*) $(-> $r:ty)* $(where $($aty:ident : $atyb_first:tt $(:: $ayb_first_ext:tt)* $(+ $ayb_rest:tt $(:: $ayb_rest_ext:tt)*)*),*)*; $($resttt:tt)* )
      ($($tailtt:tt)*)} =>
     {delegate_method!(@impl_expansion_item ($($headtt)*)
@@ -185,6 +201,10 @@ mod tests {
         pub fn to_data_add(self, val: usize) -> usize {
             self.data + val
         }
+
+        pub fn to_data_ignore_unsized<R>(self, _: Box<R>) -> usize where R: ?Sized + Clone {
+            self.data
+        }
     }
 
     #[test]
@@ -195,12 +215,12 @@ mod tests {
         }
 
         delegate_method! {
-			      impl Outer {
+			impl Outer {
                 inner as Inner:
                 fn new_inner() -> Inner;
                 fn new_inner_add(val: usize) -> Inner;
                 fn noop(&self);
-				        fn str_to_owned<'a>(str: &'a str) -> String;
+				fn str_to_owned<'a>(str: &'a str) -> String;
                 fn get(&self) -> usize;
                 fn get_add(&self, val: usize) -> usize;
                 fn reset(&mut self) -> usize;
@@ -208,6 +228,8 @@ mod tests {
                 inner as Inner:
                 fn to_data(self) -> usize;
                 fn to_data_add(self, val: usize) -> usize;
+
+                fn to_data_ignore_unsized<R>(self, r: Box<R>) -> usize where R: ?Sized + Clone;
             }
         }
 
@@ -231,5 +253,7 @@ mod tests {
 
         assert_eq!(x.clone().to_data(), 36);
         assert_eq!(x.clone().to_data_add(4), 40);
+
+        assert_eq!(x.clone().to_data_ignore_unsized(Box::new(3)), 36);
     }
 }
