@@ -28,7 +28,7 @@ You can use `delegate_method` to forward some method implementations to the fiel
         impl Outer {
             // the <as FieldType> is optional below
             // it is only used for methods without self or &self or &mut self argument
-            inner as Inner:
+            inner1 as Inner:
             pub fn fn1();
             
             // here comes another group, using another field.
